@@ -1,0 +1,20 @@
+# Python dependencies for ROS4HRI module if built from source.
+catkin_pkg
+lark-parser
+psutil
+ikpy
+lap
+transforms3d
+pycparser
+mediapipe==0.10.9
+numpy==1.23.5
+opencv-contrib-python==4.10.0.84
+opencv-python
+sounddevice==0.5.0
+protobuf==3.20.3
+CFFI==1.17.1
+absl-py==2.1.0 
+flatbuffers==24.3.25 
+matplotlib 
+empy==3.3.4
+numpy==1.23.5
