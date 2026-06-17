@@ -1,18 +1,16 @@
-# ARISE KIRO -- Handover Calculation Node
+# ARISE -- KIRO Handover Calculation Module
 
 ![Vulcanexus](https://img.shields.io/badge/Vulcanexus-Humble-00214c?style=for-the-badge&logo=ros)
 ![License](https://img.shields.io/badge/license-Apache%202.0-green?style=for-the-badge&logo=apache)
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github-actions&logoColor=white)
+![Build Status](https://img.shields.io/badge/build-manual-lightgrey?style=for-the-badge&logo=github-actions&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Supported Setup](#supported-setup)
 - [File Structure](#file-structure)
-- [Launch Arguments](#launch-arguments)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Supported Distribution](#supported-distribution)
+- [Contact Information](#contact-information)
 - [License](#license)
 
 
@@ -33,159 +31,68 @@ To ensure performance and modularity, the node uses an interface, `kiro_handover
 * `GetActiveBodyID`: Returns the ID of the human currently prioritized for interaction.
 * `ClusterHandoverVolume`: Processes the raw volume into $k$ discrete clusters for motion planning.
 
-For more information about the interfaces, please refer to the [Handover Interfaces](https://github.com/nikolaslps/kiro_handover_interfaces) repo.
+
+> [!NOTE]
+> **KIRO Interfaces:** For more information regarding the exact service definitions and structural interface parameters, please refer to the corresponding package repository:[`kiro_handover_interfaces`](https://github.com/nikolaslps/kiro_handover_interfaces).
+
+## Supported Setup
+
+| Category | Tested On | Expected Compatibility | Not Supported / Unknown |
+| :--- | :--- | :--- | :--- |
+| **Middleware & OS** | **Vulcanexus Humble** (Ubuntu 22.04 LTS) utilizing **Fast DDS** as the default RMW middleware layer | Standard ROS 2 Humble setups | Older ROS distributions (e.g., Foxy, Galactic) or ROS 1 |
+| **Sensors** | **Intel RealSense D455** | Any RGB-D sensor providing synchronized depth/color topics | Monocular 2D webcams (requires depth information) |
+
+> [!NOTE]
+>  **Important Middleware Note:** This module is optimized for the **Vulcanexus** ecosystem. It utilizes **Fast DDS** advanced features (such as optimized Quality of Service profiles for high-throughput camera image relays and skeletal landmark arrays) to maintain low-latency tracking in close-proximity human-robot interaction.
 
 ## File Structure
 ```text
 kiro_handover_calculation/
+├── docker/
+│   ├── Docker-Install.md                       # Docker Installation and Launch Manual
+│   ├── Dockerfile                              # Dockerfile based on Vulcanexus image
+│   ├── run_kiro_hri_calc.bash                  # Script to launch the Docker Container
+│   └── setup_hri_calc.sh                       # Script to build the Docker Container
+├── docs/
+│   ├── 01_arise_context.md                     # ARISE Ecosystem Context & Core Integration
+│   ├── 02_interfaces.md                        # Interface Documentation
+│   ├── 03_installation.md                      # Installation and Usage Guide
+│   ├── 04_launch_ros_nodes.md                  # ROS2 Launch Arguments
+│   └── 05_role_in_demonstrator.md              # Role in the TRL 6-7 Demonstrator
 ├── include/
 │   └── kiro_handover_calculation/
-│           ├── arm_fk.hpp                      # Forward Kinematics logic to extract the handover volume
-│           ├── body_selector.hpp               # Human prioritization logic
-│           ├── image_relay.hpp                 # Gated camera topic forwarding
-│           ├── optimal_volume_calculator.hpp   # Main handover node
-│           └── volume_clustering.hpp           # K-Means clustering service
+│       ├── arm_fk.hpp                          # Forward Kinematics logic to extract the handover volume
+│       ├── body_selector.hpp                   # Human prioritization logic
+│       ├── image_relay.hpp                     # Gated camera topic forwarding
+│       ├── optimal_volume_calculator.hpp       # Main handover node
+│       └── volume_clustering.hpp               # K-Means clustering service
 ├── launch/
 │   └── kiro_handover_calculation.launch.py     # Main system launch file
+├── media/                                      # Images 
 ├── src/
 │   ├── arm_fk.cpp
 │   ├── body_selector.cpp
 │   ├── image_relay.cpp
 │   ├── optimal_volume_calculator.cpp
 │   └── volume_clustering.cpp
+├── .gitignore
 ├── CMakeLists.txt                              # Build configuration
+├── LICENSE                                     # License information
 ├── package.xml                                 # Package metadata and dependencies
-├── requirements.txt                            # Python dependencies if built from source
-├── README.md                                   # Documentation
-└── LICENSE                                     # License information
+├── README.md                                   # Overview of the ARISE KIRO specific package
+└── requirements.txt                            # Python dependencies if built from source
 ```
 
-## Launch Arguments
-### 1. Coordinate Frames
-These parameters define the spatial context of the handover.
+> [!WARNING]
+> **Camera Proximity & Depth Stability:** The baseline 3D coordinate estimation depends heavily on stable depth data. Operators must maintain a moderate distance from the Intel RealSense D455 camera; if an operator stands too close to the sensor, the near-range depth measurements become unstable or imprecise, degrading the accuracy of the upper-limb kinematic and ergonomic volume calculations.
 
-| Argument | Default Value | Description |
-| :--- | :--- | :--- |
-| `planning_frame` | `kiro_base_link` | The robot's reference frame. Clustered handover points are transformed into this frame for MoveIt2 motion planning. |
-| `camera_frame` | `camera_color_optical_frame` | The frame used to calculate human selection priority (e.g., who is closest to the sensor) if needed. |
+## Contact Information
 
-### 2. Camera Topics (Relay Configuration)
-These define the source topics that the **Image Relay** node will listen to. The relay only publishes to global handover topics when the handover phase is active.
+For queries regarding the development, replication, or integration of this calculation module within the ARISE framework, feel free to reach out:
 
-| Argument | Default Value | Description |
-| :--- | :--- | :--- |
-| `color_img_topic` | `/camera/camera/color/image_raw/compressed` | Input color image stream (Compressed). |
-| `color_info_topic` | `/camera/camera/color/camera_info` | Input color camera metadata. |
-| `depth_img_topic` | `/camera/camera/aligned_depth_to_color/image_raw/compressedDepth` | Input depth image stream (CompressedDepth). |
-| `depth_info_topic` | `/camera/camera/aligned_depth_to_color/camera_info` | Input depth camera metadata. |
-
-### 3. HRI Body Detection Module
-Controls the lifecycle and data processing of the `hri_body_detect` module.
-
-| Argument | Default Value | Description |
-| :--- | :--- | :--- |
-| `use_depth` | `true` | Whether to use depth info for 3D skeleton estimation. |
-| `image_compressed` | `true` | Set to true to consume compressed camera streams. |
-| `auto_configure` | `false` | If true, the HRI module initializes to the 'Inactive' state automatically. |
-| `auto_activate` | `false` | If true, the HRI module starts detecting humans immediately upon launch. |
-
-## Installation
-
-### 1. Docker Container (Recommended)
-For the most stable experience, we recommend using our pre-configured Docker environment.
-* Refer to the [ARISE KIRO Docker Repository](https://github.com/andvatistas/ARISE-KIRO-reusable-modules) for setup assistance.
-* Follow the provided `README.md` within that repository to pull the image and start the container.
-
-### 2. Building from Source
-**Note**: Building from source has not been fully tested in all environments. We strongly recommend using the Docker version above.
-
-#### Prerequisites
-Ensure you are running **ROS 2 Humble**, preferably on the **Vulcanexus** image.
-
-#### Setup Workspace
-Clone the repositories into your ROS 2 workspace `src` folder:
-
-```bash
-cd ~/ros2_ws/src
-```
-
-```bash
-# Human URDF models & frames
-git clone https://github.com/ros4hri/human_description.git
-```
-
-```bash
-# ROS4HRI standard messages
-git clone https://github.com/ros4hri/hri_msgs.git
-```
-
-```bash
-# ROS4HRI RViz setup
-git clone https://github.com/ros4hri/hri_rviz.git
-```
-
-```bash
-# MediaPipe-based body tracking
-git clone -b feature-kiro-integration https://github.com/nikolaslps/hri_body_detect.git
-```
-
-```bash
-# ROS4HRI helper library
-git clone https://github.com/ros4hri/libhri.git
-```
-
-```bash
-# PAL launch configuration 
-git clone https://github.com/pal-robotics/launch_pal.git
-```
-
-```bash
-# Handover service definitions
-git clone https://github.com/nikolaslps/kiro_handover_interfaces
-```
-
-```bash
-# Handover Calculation Node
-git clone https://github.com/nikolaslps/kiro_handover_calculation.git
-```
-
-Install Dependencies
-```bash
-cd ~/ros2_ws
-sudo rosdep init # May not be necessary
-rosdep update
-apt-get update
-apt-get install -y ros-humble-magic-enum ros-humble-diagnostic-aggregator
-rosdep install --from-paths src --ignore-src -y -r --rosdistro humble
-wget https://raw.githubusercontent.com/Neargye/magic_enum/master/include/magic_enum/magic_enum.hpp -O /usr/include/magic_enum.hpp
-```
-
-Download the python requirements for the `ROS4HRI` module
-```bash
-cd ~/ros2_ws/src/kiro_handover_calculation/
-pip install -r requirements.txt
-```
-
-Build the packages by running the following from inside the `ros2_ws`:
-```bash
-cd ~/ros2_ws
-colcon build --symlink-install
-source install/setup.bash
-```
-
-## Usage 
-Launch the handover nodes by running:
-```bash
-ros2 launch kiro_handover_calculation kiro_handover_calculation.launch.py
-```
-
-In order to trigger the hri body detection and handover calculation to start, run:
-```bash
-ros2 service call /activate_handover_calc kiro_handover_interfaces/srv/ActivateHandover "{handover_phase: true}"
-```
-
-## Supported Distribution
-* **Dockerized ROS 2 Humble on the Vulcanexus image**
+* **Module Developer:** Nikolaos Lappas
+* **GitHub:** [nikolaslps](https://github.com/nikolaslps)
+* **Email:** [nikolas.lappas.2003@gmail.com](mailto:nikolas.lappas.2003@gmail.com)
 
 ## License
 This project is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
