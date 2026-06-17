@@ -55,7 +55,7 @@ ros2 launch kiro_handover_calculation kiro_handover_calculation.launch.py
 ```
 
 > [!TIP]
-> Configuration Check: Before launching, review the default parameters directly inside `kiro_handover_calculation.launch.py`. For a full deep-dive into configurable parameters and launch options, see the [Launch ROS Nodes Documentation](docs/04_launch_ros_nodes.md).
+> Configuration Check: Before launching, review the default parameters directly inside `kiro_handover_calculation.launch.py`. For a full deep-dive into configurable parameters and launch options, see the [Launch ROS Nodes Documentation](../docs/04_launch_ros_nodes.md).
 
 
 ## Testing the services
