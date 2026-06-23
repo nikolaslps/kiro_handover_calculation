@@ -102,3 +102,6 @@ markers:
     <td align="center"><b>Figure 2:</b> Gazebo Simulation Environment</td>
   </tr>
 </table>
+
+> [!NOTE]
+> **Visualization:** In order for the optimal handover volume (green color in the above figure) to be visualized, the fixed frame in RViz must be set to the corresponding/tracked human <body_id> (e.g. for the above terminal example to: body_betxf).
