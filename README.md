@@ -58,7 +58,8 @@ kiro_handover_calculation/
 │   ├── 02_interfaces.md                        # Interface Documentation
 │   ├── 03_installation.md                      # Installation and Usage Guide
 │   ├── 04_launch_ros_nodes.md                  # ROS2 Launch Arguments
-│   └── 05_role_in_demonstrator.md              # Role in the TRL 6-7 Demonstrator
+│   ├── 05_basic_demo_how_to_use.md             # Documentation for demo (how-to-use)
+│   └── 06_role_in_demonstrator.md              # Role in the TRL 6-7 Demonstrator
 ├── include/
 │   └── kiro_handover_calculation/
 │       ├── arm_fk.hpp                          # Forward Kinematics logic to extract the handover volume
