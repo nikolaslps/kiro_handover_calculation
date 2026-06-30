@@ -97,3 +97,8 @@ Upon launching, the system initializes your custom calculation pipeline alongsid
 > ```bash
 > pip3 install "numpy==1.23.5"
 > ```
+
+## Troubleshooting
+* Communication Errors: Verify that the ROS domain ID matches across all nodes and ensure the Docker container is running with `$ --network=host` to avoid network isolation issues.
+* Human Tracking Failures: If the human is not detected, confirm that the camera topics are correctly relayed and that the operator maintains an appropriate distance from the RGB-D sensor, as proximity issues can disrupt the skeletal tracking algorithm.
+* Dependency Resolution: Ensure the `$ RMW_IMPLEMENTATION` environment variable is explicitly set to `$ rmw_fastrtps_cpp` to maintain DDS middleware consistency across all Vulcanexus nodes.
